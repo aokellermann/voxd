@@ -2,6 +2,7 @@ import subprocess
 import os
 from pathlib import Path
 import re
+import unicodedata
 from voxd.utils.libw import verbo, verr
 from voxd.paths import find_whisper_cli, find_base_model
 from voxd.utils.languages import normalize_lang_code, is_valid_lang
@@ -99,8 +100,10 @@ class WhisperTranscriber:
 
         orig_tscript = "".join(lines)
 
-        # Strip timestamps like [00:00.000] or (00:00)
+        # Strip timestamps like [00:00.000] or (00:00) and whisper hallucination tokens
         tscript = re.sub(r"\[\d{2}:\d{2}[\.:]\d{3}\]|\(\d{2}:\d{2}\)", "", orig_tscript)
+        tscript = re.sub(r"\[BLANK_AUDIO\]", "", tscript)
         tscript = re.sub(r"\s+", " ", tscript).strip()
+        tscript = ''.join(c for c in tscript if not unicodedata.category(c).startswith('C'))
 
         return tscript, orig_tscript
